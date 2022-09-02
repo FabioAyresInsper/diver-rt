@@ -1,38 +1,50 @@
-import torch
-torch.backends.cudnn.enabled=True
-torch.backends.cudnn.benchmark = False
-
+# pylint: disable=missing-docstring, invalid-name
 from argparse import ArgumentParser
 
-import moderngl
-from scene import DIVeRScene
+import moderngl_window as mglw
+import torch
 
 from orbit_camera import OrbitCamera
-import moderngl_window as mglw
+from scene import DIVeRScene
+
 from diver import DIVeR
 
+torch.backends.cudnn.enabled = True
+torch.backends.cudnn.benchmark = False
 
-""" camera viewer code"""
+
 class Viewer(mglw.WindowConfig):
+    """ camera viewer code"""
+
     gl_version = (3, 3)
     title = "DIVeR Viewer"
     window_size = (800, 800)
     aspect_ratio = 1 / 1
     resizable = False
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.width = self.window_size[0]
         self.height = self.window_size[1]
         self.aspect_ratio = self.width / self.height
         self.diver_model = DIVeR(self.args)
         self.scene = DIVeRScene(self)
 
-        # self.camera = OrbitCamera(self.width, self.height, focal_length=self.width * 0.7)
+        # self.camera = OrbitCamera(
+        #     self.width,
+        #     self.height,
+        #     focal_length=self.width * 0.7,
+        # )
+
         o = (-self.diver_model.xyzmin / self.diver_model.voxel_size)
         z = self.diver_model.voxel_num * 2
-        self.camera = OrbitCamera(pivot=[o, o, o], azimuth=0, elevation=-60, zoom=z)
+        self.camera = OrbitCamera(
+            pivot=[o, o, o],
+            azimuth=0,
+            elevation=-60,
+            zoom=z,
+        )
 
     def mouse_position_event(self, x, y, dx, dy):
         pass
@@ -68,16 +80,14 @@ class Viewer(mglw.WindowConfig):
             self.camera.pan_end(x, y)
         # print("Mouse button {} released at {}, {}".format(button, x, y))
 
-
-
     @classmethod
-    def add_arguments(self, parser: ArgumentParser):
+    def add_arguments(cls, parser: ArgumentParser):
         parser.add_argument("--weight_path", type=str, required=True)
         parser.add_argument("--voxel_num", type=int, default=256)
         parser.add_argument("--voxel_dim", type=int, default=32)
         parser.add_argument("--grid_size", type=str, default="2.8")
         parser.add_argument("--device", type=str, default="")
-        self.args = parser.parse_known_args()[0]
+        cls.args = parser.parse_known_args()[0]
         return
 
     def render(self, time, frame_time):
